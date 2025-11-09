@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const Dashboard = () => {
@@ -30,6 +30,31 @@ const Dashboard = () => {
           <p className="text-gray-600">
             The dashboard feature is under development. Check back soon for health tracking capabilities!
           </p>
+          <div className="mt-6">
+            <button
+              onClick={async () => {
+                try {
+                  // Trigger test run and download the result file
+                  const resp = await fetch('/api/run-tests', { method: 'GET' });
+                  if (!resp.ok) throw new Error('Test run failed');
+                  const blob = await resp.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'test_results.txt';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  alert('Failed to run tests: ' + err.message);
+                }
+              }}
+              className="mt-4 inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Run Backend Tests & Download Results
+            </button>
+          </div>
         </motion.div>
       </div>
     </div>

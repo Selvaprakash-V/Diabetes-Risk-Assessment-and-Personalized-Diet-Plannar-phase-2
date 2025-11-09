@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "diabetes-diet-planner-frontend": "file:.."
+  }
+}

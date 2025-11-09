@@ -6,7 +6,7 @@ import ChartVisualization from '../components/ChartVisualization';
 import FoodRecommendation from '../components/FoodRecommendation';
 import { api } from '../services/api';
 import HandshakeAnimation from '../components/HandshakeAnimation';
-import DoctorSvg from '../assets/doctor.svg';
+import DoctorAnimation from '../components/DoctorAnimation';
 
 const Assessment = () => {
   const [prediction, setPrediction] = useState(null);
@@ -36,7 +36,11 @@ const Assessment = () => {
           transition={{ duration: 0.6 }}
           className="flex items-center justify-center gap-6 mb-8"
         >
-          <img src={DoctorSvg} alt="doctor" className="w-24 h-24 rounded-lg shadow-md" />
+          {/* Use animated doctor component for livelier UI */}
+          <div className="w-28 h-28">
+            <DoctorAnimation width={112} height={112} />
+          </div>
+
           <div className="text-left">
             <h1 className="text-4xl font-bold gradient-text mb-2">Diabetes Risk Assessment</h1>
             <p className="text-lg text-gray-600 max-w-2xl">
@@ -44,6 +48,7 @@ const Assessment = () => {
               with personalized recommendations.
             </p>
           </div>
+
           <div className="ml-4">
             <HandshakeAnimation />
           </div>

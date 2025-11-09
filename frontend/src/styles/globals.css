@@ -36,33 +36,47 @@
     background: linear-gradient(to right, #e2e8f0 0%, #e2e8f0 100%);
     outline: none;
     border-radius: 15px;
+    transition: all 0.3s ease;
   }
   
   .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    transition: all 0.3s ease;
+    border: 2px solid white;
   }
   
   .slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+  }
+  
+  .slider::-webkit-slider-thumb:active {
     transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.8);
   }
   
   .slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: 2px solid white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    transition: all 0.3s ease;
+  }
+  
+  .slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
   }
   
   .page-transition {
@@ -76,5 +90,80 @@
   
   .hero-gradient {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  }
+  
+  .animate-gradient {
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce 3s infinite;
+  }
+  
+  .animate-wiggle {
+    animation: wiggle 2s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes wiggle {
+  0%, 7% {
+    transform: rotateZ(0);
+  }
+  15% {
+    transform: rotateZ(-15deg);
+  }
+  20% {
+    transform: rotateZ(10deg);
+  }
+  25% {
+    transform: rotateZ(-10deg);
+  }
+  30% {
+    transform: rotateZ(6deg);
+  }
+  35% {
+    transform: rotateZ(-4deg);
+  }
+  40%, 100% {
+    transform: rotateZ(0);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
   }
 }

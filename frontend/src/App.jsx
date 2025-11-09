@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Assessment from './pages/Assessment';
 import About from './pages/About';
+import Dashboard from './pages/Dashboard';
 
 
 function App() {
@@ -43,6 +44,16 @@ function App() {
                 transition={{ duration: 0.5 }}
               >
                 <About />
+              </motion.div>
+            } />
+            <Route path="/dashboard" element={
+              <motion.div
+                initial={{ opacity: 0, x: -100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 100 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Dashboard />
               </motion.div>
             } />
 

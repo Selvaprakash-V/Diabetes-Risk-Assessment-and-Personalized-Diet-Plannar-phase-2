@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { jsPDF } from 'jspdf';
 import { motion } from 'framer-motion';
 
 const Dashboard = () => {
@@ -34,25 +35,41 @@ const Dashboard = () => {
             <button
               onClick={async () => {
                 try {
-                  // Trigger test run and download the result file
-                  const resp = await fetch('/api/run-tests', { method: 'GET' });
-                  if (!resp.ok) throw new Error('Test run failed');
+                  // Sample payload: you can replace this with real user data or wire to form
+                  const payload = {
+                    pregnancies: 2,
+                    glucose: 120,
+                    bloodPressure: 70,
+                    skinThickness: 20,
+                    insulin: 79,
+                    bmi: 25.0,
+                    diabetesPedigreeFunction: 0.5,
+                    age: 45
+                  };
+
+                  const resp = await fetch('/api/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                  });
+
+                  if (!resp.ok) throw new Error('Report generation failed');
                   const blob = await resp.blob();
                   const url = window.URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = 'test_results.txt';
+                  a.download = 'diabetes_report.pdf';
                   document.body.appendChild(a);
                   a.click();
                   a.remove();
                   window.URL.revokeObjectURL(url);
                 } catch (err) {
-                  alert('Failed to run tests: ' + err.message);
+                  alert('Failed to download PDF: ' + err.message);
                 }
               }}
-              className="mt-4 inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="mt-4 inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
             >
-              Run Backend Tests & Download Results
+              Download Server PDF Report
             </button>
           </div>
         </motion.div>

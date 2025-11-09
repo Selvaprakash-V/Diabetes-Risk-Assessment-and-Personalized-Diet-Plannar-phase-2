@@ -23,9 +23,27 @@ def train_diabetes_model():
     y = df['Outcome']
     
     # Split data
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
+    # For very small datasets, stratified split can fail. Adjust test_size and stratify accordingly.
+    n_samples = len(y)
+    test_size = 0.2
+    stratify_param = y
+    try:
+        # If there aren't enough samples per class, disable stratify
+        class_counts = y.value_counts()
+        if (class_counts.min() < 2) or (n_samples * test_size < class_counts.nunique()):
+            stratify_param = None
+        # If dataset is tiny, increase test_size to get a meaningful test set
+        if n_samples < 20:
+            test_size = 0.4
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=42, stratify=stratify_param
+        )
+    except Exception:
+        # Fallback to a simple non-stratified split
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.3, random_state=42
+        )
     
     # Train model
     print("🤖 Training Random Forest model...")

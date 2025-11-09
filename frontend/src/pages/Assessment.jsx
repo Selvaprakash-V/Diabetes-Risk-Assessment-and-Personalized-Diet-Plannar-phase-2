@@ -63,6 +63,44 @@ const Assessment = () => {
 
         {prediction && (
           <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="text-center mt-4"
+          >
+            <button
+              onClick={async () => {
+                try {
+                  if (!inputData) return alert('No input data available');
+                  const resp = await fetch('/api/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(inputData)
+                  });
+                  if (!resp.ok) throw new Error('Report generation failed');
+                  const blob = await resp.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'diabetes_report.pdf';
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error(err);
+                  alert('Failed to download PDF: ' + err.message);
+                }
+              }}
+              className="mt-6 inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              📄 Download PDF Report
+            </button>
+          </motion.div>
+        )}
+
+        {prediction && (
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}

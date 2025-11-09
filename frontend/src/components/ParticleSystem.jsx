@@ -4,6 +4,11 @@ import { motion } from 'framer-motion'
 const ParticleSystem = ({ particleCount = 50, colors = ['#3B82F6', '#8B5CF6', '#EC4899', '#10B981'] }) => {
   const [particles, setParticles] = useState([])
 
+  // Create a stable key for colors so that a freshly-created but identical
+  // default colors array does not trigger the effect repeatedly. We stringify
+  // the array so React can compare by value instead of by reference.
+  const colorsKey = JSON.stringify(colors)
+
   useEffect(() => {
     const newParticles = Array.from({ length: particleCount }, (_, i) => ({
       id: i,
@@ -17,7 +22,7 @@ const ParticleSystem = ({ particleCount = 50, colors = ['#3B82F6', '#8B5CF6', '#
       amplitude: Math.random() * 50 + 20
     }))
     setParticles(newParticles)
-  }, [particleCount, colors])
+  }, [particleCount, colorsKey])
 
   const particleVariants = {
     animate: (particle) => ({

@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 from .diet_recommender import get_food_recommendations, calculate_meal_plan_nutrition
 from .utils import calculate_nutrition_needs, validate_input_data
+from .food_recommender import FoodRecommender
 import io
 from datetime import datetime
 
@@ -17,8 +18,9 @@ from reportlab.platypus import Paragraph, Frame, KeepInFrame
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-# Load model on startup
+# Load model and food recommender on startup
 model = load_model()
+food_recommender = FoodRecommender()
 
 @api_bp.route('/predict', methods=['POST'])
 def predict():
@@ -44,29 +46,29 @@ def predict():
             data['bmi'], data['age'], data['glucose'], prediction == 1
         )
         
-        # Get food recommendations
-        food_recommendations = get_food_recommendations(
-            prediction == 1, data['glucose'], data['bmi'], data['age'], nutrition['calories']
-        )
+        # Determine risk level
+        diabetic_prob = probability[1] if isinstance(probability, list) else probability
+        if diabetic_prob < 0.3:
+            risk_level = "Low"
+        elif diabetic_prob < 0.6:
+            risk_level = "Moderate"
+        else:
+            risk_level = "High"
         
-        # Create sample meal plan
-        sample_meal_plan = [
-            food_recommendations['breakfast'][0],
-            food_recommendations['lunch'][0], 
-            food_recommendations['dinner'][0],
-            food_recommendations['snacks'][0]
-        ]
+        # Get daily meal plan based on patient condition
+        daily_meal_plan = food_recommender.get_daily_meal_plan(data, risk_level, "Vegetarian")
         
-        meal_plan_nutrition = calculate_meal_plan_nutrition(sample_meal_plan)
+        # Get nutrition from daily meal plan
+        meal_plan_nutrition = daily_meal_plan.get('daily_nutrition', {})
         
         return jsonify({
             'prediction': int(prediction),
             'probability': probability,
             'risk_factors': risk_factors,
+            'risk_level': risk_level,
             'accuracy': 0.952,
             'nutrition': nutrition,
-            'food_recommendations': food_recommendations,
-            'sample_meal_plan': sample_meal_plan,
+            'daily_meal_plan': daily_meal_plan,
             'meal_plan_nutrition': meal_plan_nutrition
         })
             
@@ -135,14 +137,21 @@ def generate_report():
         # Run prediction using existing model loader
         prediction, probability = predict_diabetes(model, data)
 
-        # Calculate nutrition and recommendations
+        # Determine risk level
+        diabetic_prob = probability[1] if isinstance(probability, list) else probability
+        if diabetic_prob < 0.3:
+            risk_level = "Low"
+        elif diabetic_prob < 0.6:
+            risk_level = "Moderate"
+        else:
+            risk_level = "High"
+        
+        # Calculate nutrition and get daily meal plan
         nutrition = calculate_nutrition_needs(
             data['bmi'], data['age'], data['glucose'], prediction == 1
         )
-
-        food_recommendations = get_food_recommendations(
-            prediction == 1, data['glucose'], data['bmi'], data['age'], nutrition['calories']
-        )
+        
+        daily_meal_plan = food_recommender.get_daily_meal_plan(data, risk_level, "Vegetarian")
 
         # Build PDF in memory
         buffer = io.BytesIO()
@@ -217,41 +226,60 @@ def generate_report():
         doc.drawString(x_margin + 6, y, f"Calories: {nutrition.get('calories')}, Protein: {nutrition.get('protein')} g, Carbs: {nutrition.get('carbs')} g")
         y -= line_height * 1.5
 
-        # Food recommendations formatted
+        # Daily Meal Plan
         doc.setFont('Helvetica-Bold', 12)
-        doc.drawString(x_margin, y, 'Food Recommendations')
-        y -= line_height
-        doc.setFont('Helvetica', 10)
-
-        def draw_group(col_title, items, y):
+        doc.drawString(x_margin, y, 'Recommended Daily Meal Plan')
+        y -= line_height * 1.5
+        
+        # Daily nutrition summary
+        if daily_meal_plan.get('daily_nutrition'):
+            dn = daily_meal_plan['daily_nutrition']
             doc.setFont('Helvetica-Bold', 11)
-            doc.drawString(x_margin + 6, y, col_title)
+            doc.drawString(x_margin + 6, y, 'Daily Nutrition Summary')
             y -= line_height
             doc.setFont('Helvetica', 10)
-            for it in items[:6]:
-                name = it.get('name', '')
-                calories = it.get('calories', '')
-                carbs = it.get('carbs', '')
-                protein = it.get('protein', '')
-                text = f'• {name} — {calories} kcal, {carbs}g carbs, {protein}g protein'
-                # wrap using Paragraph for long text
-                style = getSampleStyleSheet()['Normal']
-                para = Paragraph(text, style)
-                w = width - x_margin * 2
-                # use a small frame to layout this paragraph
-                f = Frame(x_margin + 12, y - line_height, w - 24, line_height * 1.5, showBoundary=0)
-                k = KeepInFrame(w - 24, line_height * 1.5, [para])
-                f.addFromList([k], doc)
-                y -= line_height * 1.2
+            doc.drawString(x_margin + 12, y, f"Total Calories: {dn.get('calories', 0)} | Protein: {dn.get('protein', 0)}g | Fiber: {dn.get('fiber', 0)}g | Avg GI: {dn.get('avg_gi', 0)}")
+            y -= line_height * 1.5
+
+        def draw_meal_group(meal_title, foods, y):
+            if not foods:
+                return y
+            doc.setFont('Helvetica-Bold', 11)
+            doc.drawString(x_margin + 6, y, f'{meal_title.capitalize()} ({len(foods)} items)')
+            y -= line_height
+            doc.setFont('Helvetica', 9)
+            for food in foods:
+                title = food.get('title', '')
+                calories = food.get('calories', 0)
+                protein = food.get('protein', 0)
+                fiber = food.get('fiber', 0)
+                gi = food.get('gi_index', 0)
+                risk = food.get('risk_level', '')
+                text = f'• {title} — {calories} kcal, {protein}g protein, {fiber}g fiber, GI: {gi} ({risk} risk)'
+                
+                # Simple text wrapping
+                if len(text) > 85:
+                    words = text.split()
+                    line1 = ' '.join(words[:12])
+                    line2 = '  ' + ' '.join(words[12:])
+                    doc.drawString(x_margin + 12, y, line1)
+                    y -= line_height * 0.8
+                    doc.drawString(x_margin + 12, y, line2)
+                else:
+                    doc.drawString(x_margin + 12, y, text)
+                
+                y -= line_height
                 if y < inch * 1.5:
                     doc.showPage()
                     y = height - inch
-            return y
+            return y - line_height * 0.3
 
-        for group in ['breakfast', 'lunch', 'dinner', 'snacks']:
-            items = food_recommendations.get(group, []) if isinstance(food_recommendations, dict) else []
-            y = draw_group(group.capitalize(), items, y)
-            y -= line_height * 0.6
+        # Draw each meal section
+        for meal_type in ['breakfast', 'lunch', 'dinner', 'snacks']:
+            foods = daily_meal_plan.get(meal_type, [])
+            if foods:
+                y = draw_meal_group(meal_type, foods, y)
+                y -= line_height * 0.5
 
         # Footer
         if y < inch:

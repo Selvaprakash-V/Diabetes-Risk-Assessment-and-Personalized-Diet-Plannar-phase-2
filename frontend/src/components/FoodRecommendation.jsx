@@ -1,159 +1,178 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
-const FoodRecommendation = ({ prediction, inputData }) => {
-  const isHighRisk = prediction.prediction === 1;
-  const { glucose, bmi, age } = inputData;
+const FoodRecommendation = ({ dailyMealPlan, riskLevel }) => {
+  const [expandedMeal, setExpandedMeal] = useState(null);
 
-  // Use nutrition data from API if available, otherwise calculate
-  const nutrition = prediction.nutrition || {
-    calories: 2000,
-    protein: 50,
-    carbs: isHighRisk ? 120 : 200
+  const getRiskColor = (risk) => {
+    switch (risk) {
+      case 'Low': return 'text-green-600 bg-green-50 border-green-200';
+      case 'Moderate': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'High': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
   };
 
-  // Use food recommendations from API if available
-  const recommendations = prediction.food_recommendations || {
-    breakfast: [{ name: 'Steel-cut oats with berries', calories: 250, protein: 8, carbs: 45, gi: 42 }],
-    lunch: [{ name: 'Grilled chicken salad', calories: 350, protein: 35, carbs: 15, gi: 25 }],
-    dinner: [{ name: 'Grilled fish with asparagus', calories: 320, protein: 30, carbs: 10, gi: 15 }],
-    snacks: [{ name: 'Almonds (1 oz)', calories: 160, protein: 6, carbs: 6, gi: 15 }]
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
   };
 
-  // Use sample meal plan from API if available
-  const plan = prediction.sample_meal_plan ? 
-    prediction.sample_meal_plan.map((item, index) => ({
-      ...item,
-      mealType: ['breakfast', 'lunch', 'dinner', 'snacks'][index]
-    })) : 
-    Object.entries(recommendations).map(([mealType, items]) => ({ ...items[0], mealType }));
-
-  const totals = prediction.meal_plan_nutrition || {
-    calories: plan.reduce((sum, meal) => sum + meal.calories, 0),
-    protein: plan.reduce((sum, meal) => sum + meal.protein, 0),
-    carbs: plan.reduce((sum, meal) => sum + meal.carbs, 0)
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="glass-card p-8 mt-8"
+      className="glass-card p-8 mb-8"
     >
       <motion.h2
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-2xl font-bold text-center mb-8 gradient-text"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold text-center mb-8 gradient-text"
       >
-        🍽️ Personalized Food Recommendations
+        🍽️ Food Recommendations
       </motion.h2>
 
-      {/* Nutritional Targets */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"
-      >
-        <div className="bg-white/60 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold text-blue-600">{nutrition.calories}</div>
-          <div className="text-sm text-gray-600">Daily Calories</div>
-        </div>
-        <div className="bg-white/60 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold text-green-600">{nutrition.protein}g</div>
-          <div className="text-sm text-gray-600">Protein Target</div>
-        </div>
-        <div className="bg-white/60 p-4 rounded-xl text-center">
-          <div className="text-2xl font-bold text-purple-600">{nutrition.carbs}g</div>
-          <div className="text-sm text-gray-600">Carb Limit</div>
-        </div>
-      </motion.div>
-
-      {/* Diet Type Alert */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.4 }}
-        className={`p-4 rounded-xl mb-6 text-center ${
-          isHighRisk || glucose > 140
-            ? 'bg-red-50 border border-red-200'
-            : 'bg-green-50 border border-green-200'
-        }`}
-      >
-        <div className="text-lg font-semibold">
-          {isHighRisk || glucose > 140 ? '🔴 Low GI Diet Recommended' : '🟢 Balanced Diet Plan'}
-        </div>
-        <div className="text-sm text-gray-600 mt-1">
-          {isHighRisk || glucose > 140 
-            ? 'Focus on low glycemic index foods to manage blood sugar'
-            : 'Maintain balanced nutrition with moderate carbohydrates'
-          }
-        </div>
-      </motion.div>
-
-      {/* Today's Meal Plan */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white/60 p-6 rounded-xl mb-6"
-      >
-        <h3 className="text-lg font-semibold mb-4">📅 Today's Meal Plan</h3>
-        <div className="space-y-4">
-          {plan.map((meal, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 + index * 0.1 }}
-              className="flex justify-between items-center p-3 bg-white/50 rounded-lg"
-            >
-              <div>
-                <div className="font-medium capitalize">{meal.mealType}: {meal.name}</div>
-                <div className="text-sm text-gray-600">GI: {meal.gi} (Low)</div>
-              </div>
-              <div className="text-right text-sm">
-                <div>{meal.calories} cal</div>
-                <div>{meal.protein}g protein</div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        
-        {/* Daily Totals */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="flex justify-between text-sm font-semibold">
-            <span>Daily Totals:</span>
-            <span>{totals.calories} cal | {totals.protein}g protein | {totals.carbs}g carbs</span>
+      {/* Daily Nutrition Summary */}
+      {dailyMealPlan?.daily_nutrition && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl p-6 mb-8 border border-green-200"
+        >
+          <h3 className="text-xl font-bold text-center mb-4 text-gray-800">📊 Daily Nutrition Summary</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="bg-white/60 rounded-xl p-4">
+              <div className="text-2xl font-bold text-blue-600">{dailyMealPlan.daily_nutrition.calories}</div>
+              <div className="text-sm text-gray-600">Calories</div>
+            </div>
+            <div className="bg-white/60 rounded-xl p-4">
+              <div className="text-2xl font-bold text-green-600">{dailyMealPlan.daily_nutrition.protein}g</div>
+              <div className="text-sm text-gray-600">Protein</div>
+            </div>
+            <div className="bg-white/60 rounded-xl p-4">
+              <div className="text-2xl font-bold text-purple-600">{dailyMealPlan.daily_nutrition.fiber}g</div>
+              <div className="text-sm text-gray-600">Fiber</div>
+            </div>
+            <div className="bg-white/60 rounded-xl p-4">
+              <div className="text-2xl font-bold text-orange-600">{dailyMealPlan.daily_nutrition.avg_gi}</div>
+              <div className="text-sm text-gray-600">Avg GI</div>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
-      {/* Tips */}
+      {/* Daily Meal Plan */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        <h4 className="font-semibold mb-2">💡 Nutrition Tips</h4>
-        <div className="text-sm text-gray-700 space-y-1">
-          {isHighRisk || glucose > 140 ? (
-            <>
-              <p>• Choose foods with GI &lt; 55 to manage blood sugar</p>
-              <p>• Eat protein with each meal to slow glucose absorption</p>
-              <p>• Monitor portion sizes and eat at regular intervals</p>
-            </>
-          ) : (
-            <>
-              <p>• Maintain balanced meals with all food groups</p>
-              <p>• Stay hydrated and include fiber-rich foods</p>
-              <p>• Practice portion control for weight management</p>
-            </>
-          )}
-        </div>
+        {dailyMealPlan && Object.entries(dailyMealPlan).map(([mealType, foods]) => {
+          if (mealType === 'daily_nutrition' || !Array.isArray(foods)) return null;
+          
+          const mealIcons = {
+            breakfast: '🌅',
+            lunch: '☀️',
+            dinner: '🌙',
+            snacks: '🍎'
+          };
+
+          return (
+            <motion.div
+              key={mealType}
+              variants={itemVariants}
+              className="mb-6"
+            >
+              <motion.button
+                onClick={() => setExpandedMeal(expandedMeal === mealType ? null : mealType)}
+                whileHover={{ scale: 1.02 }}
+                className="w-full bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200 hover:border-blue-300 transition-all duration-300"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <span className="text-3xl">{mealIcons[mealType]}</span>
+                    <div className="text-left">
+                      <h3 className="text-xl font-bold text-gray-800 capitalize">
+                        {mealType}
+                      </h3>
+                      <p className="text-gray-600">
+                        {foods.length} recommended items
+                      </p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: expandedMeal === mealType ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ChevronDownIcon className="w-6 h-6 text-gray-600" />
+                  </motion.div>
+                </div>
+              </motion.button>
+
+              <AnimatePresence>
+                {expandedMeal === mealType && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                  >
+                    {foods.map((food, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-white/80 rounded-xl p-6 border border-white/40 shadow-md hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="text-center mb-4">
+                          <div className="text-3xl mb-2">{food.icon}</div>
+                          <h4 className="font-bold text-lg text-gray-800 mb-2">
+                            {food.title}
+                          </h4>
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${getRiskColor(food.risk_level)}`}>
+                            {food.risk_level} Risk
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Calories:</span>
+                            <span className="font-semibold">{food.calories}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Protein:</span>
+                            <span className="font-semibold">{food.protein}g</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Fiber:</span>
+                            <span className="font-semibold">{food.fiber}g</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">GI Index:</span>
+                            <span className={`font-semibold ${food.gi_index < 55 ? 'text-green-600' : food.gi_index < 70 ? 'text-yellow-600' : 'text-red-600'}`}>
+                              {food.gi_index}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </motion.div>
     </motion.div>
   );

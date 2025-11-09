@@ -126,7 +126,10 @@ const Assessment = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <FoodRecommendation prediction={prediction} inputData={inputData} />
+            <FoodRecommendation 
+              dailyMealPlan={prediction.daily_meal_plan}
+              riskLevel={prediction.risk_level}
+            />
           </motion.div>
         )}
       </div>

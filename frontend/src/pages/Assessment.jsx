@@ -5,6 +5,8 @@ import ResultCard from '../components/ResultCard';
 import ChartVisualization from '../components/ChartVisualization';
 import FoodRecommendation from '../components/FoodRecommendation';
 import { api } from '../services/api';
+import HandshakeAnimation from '../components/HandshakeAnimation';
+import DoctorSvg from '../assets/doctor.svg';
 
 const Assessment = () => {
   const [prediction, setPrediction] = useState(null);
@@ -32,15 +34,19 @@ const Assessment = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-8"
+          className="flex items-center justify-center gap-6 mb-8"
         >
-          <h1 className="text-4xl font-bold gradient-text mb-4">
-            Diabetes Risk Assessment
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Enter your health information below to get an AI-powered diabetes risk assessment
-            with personalized recommendations.
-          </p>
+          <img src={DoctorSvg} alt="doctor" className="w-24 h-24 rounded-lg shadow-md" />
+          <div className="text-left">
+            <h1 className="text-4xl font-bold gradient-text mb-2">Diabetes Risk Assessment</h1>
+            <p className="text-lg text-gray-600 max-w-2xl">
+              Enter your health information below to get an AI-powered diabetes risk assessment
+              with personalized recommendations.
+            </p>
+          </div>
+          <div className="ml-4">
+            <HandshakeAnimation />
+          </div>
         </motion.div>
 
         <motion.div
